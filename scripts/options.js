@@ -30,11 +30,32 @@ async function AddOptionsListeners() {
   document
     .getElementById("linkModalSaveChanges")
     .addEventListener("click", async () => SaveLinkModal());
+  document
+    .getElementById("linkModalSaveChanges")
+    .addEventListener("keypress", async (e) => {
+      if (e.key == "Enter")
+        SaveLinkModal();
+    });
+
+  // inputs
+  document
+    .getElementById("linkUrl")
+    .addEventListener("keypress", async (e) => {
+      if (e.key == "Enter")
+        SaveLinkModal();
+    });
 
   // debugging
   document
     .getElementById("clearStorage")
     .addEventListener("click", () => ClearStorage());
+
+  // modal
+  document
+    .getElementById("linkModal")
+    .addEventListener("shown.bs.modal", () => {
+      document.getElementById("linkUrl").focus();
+    });
 }
 
 // debug function
@@ -46,39 +67,58 @@ function ClearStorage() {
 }
 
 async function SaveLinkModal() {
-  // TODO throw failure if object size will exceed storage
+  // stop if object size will exceed storage
   let tmpReaderLinks = structuredClone(readerLinks);
-  tmpReaderLinks.push({
-    url: document.getElementById("linkUrl").value,
-    mon: document.getElementById("linkMonday").checked,
-    tue: document.getElementById("linkTuesday").checked,
-    wed: document.getElementById("linkWednesday").checked,
-    thu: document.getElementById("linkThursday").checked,
-    fri: document.getElementById("linkFriday").checked,
-    sat: document.getElementById("linkSaturday").checked,
-    sun: document.getElementById("linkSunday").checked,
-  });
+  let newDays = "" + (+document.getElementById("linkMonday").checked)
+    + (+document.getElementById("linkTuesday").checked)
+    + (+document.getElementById("linkWednesday").checked)
+    + (+document.getElementById("linkThursday").checked)
+    + (+document.getElementById("linkFriday").checked)
+    + (+document.getElementById("linkSaturday").checked)
+    + (+document.getElementById("linkSunday").checked);
+  let newUrl = document.getElementById("linkUrl").value;
+  let linkIndex = document.getElementById("modalId").innerHTML;
+
+  if (linkIndex == -1) {
+    tmpReaderLinks.push({
+      days: newDays,
+      url: newUrl
+    });
+  }
+  else {
+    tmpReaderLinks[linkIndex].days = newDays;
+    tmpReaderLinks[linkIndex].url = newUrl;
+  }
   let tmpBytes = byteSize(JSON.stringify(tmpReaderLinks));
   if (tmpBytes >= 8192) {
     alert(
-      "Too many links to read, exceeds 8 KB storage size, please delete some first."
+      "Too many links to read, exceeds 8 KB sync storage size, please delete some first."
     );
     return;
   } else {
-    alert("Reader links are " + tmpBytes + " KB in size.");
-  }
+    // save value to chrome storage sync and reload links
+    readerLinks = tmpReaderLinks;
+    chrome.storage.sync.set({
+      readerLinks: tmpReaderLinks
+    });
 
-  // TODO save value to chrome storage sync
+    document.getElementById("linksList").innerHTML = "";
+    readerLinks.forEach((item, index) =>
+      AddItemToLinksList(linksList, index, item["url"])
+    );
+  }
 
   linkModal.hide();
 }
 
 async function ShowLinkModal(id) {
-  await ClearLinkModal();
+  ClearLinkModal();
 
   if (id != undefined && id >= 0) {
     let obj = readerLinks[id];
+
     document.getElementById("linkUrl").value = obj["url"];
+
     document.getElementById("linkMonday").checked = parseInt(
       obj["days"].charAt(0)
     );
@@ -103,12 +143,10 @@ async function ShowLinkModal(id) {
     document.getElementById("modalId").innerHTML = id;
   }
 
-  // TODO focus on URL input
-
   linkModal.show();
 }
 
-async function ClearLinkModal() {
+function ClearLinkModal() {
   document.getElementById("linkUrl").value = "";
   document.getElementById("modalId").innerHTML = -1;
 
@@ -140,48 +178,52 @@ async function LoadDataFromStorage(items) {
   // links
   let linksList = document.getElementById("linksList");
   readerLinks = items["readerLinks"];
+  if (readerLinks == undefined) {
+    readerLinks = [];
+  }
   readerLinks.forEach((item, index) =>
     AddItemToLinksList(linksList, index, item["url"])
   );
 }
 
 function AddItemToLinksList(linksListElement, index, url) {
-  var entry = document.createElement("li");
+  let entry = document.createElement("li");
 
-  var link = document.createElement("a");
+  let link = document.createElement("a");
   link.setAttribute("href", url);
   link.setAttribute("target", "_blank");
   link.innerHTML = url;
 
-  var span = document.createElement("span");
+  let span = document.createElement("span");
   span.id = index;
   span.classList.add("d-inline-block");
   span.classList.add("align-middle");
   span.classList.add("float-start");
   span.appendChild(link);
 
-  var editIcon = document.createElement("i");
+  let editIcon = document.createElement("i");
   editIcon.classList.add("bi-pencil-square");
 
-  var editBtn = document.createElement("button");
+  let editBtn = document.createElement("button");
   editBtn.type = "button";
   editBtn.classList.add("btn");
   editBtn.classList.add("btn-xs");
   editBtn.classList.add("btn-outline-primary");
   editBtn.id = "editLink" + index;
   editBtn.appendChild(editIcon);
+  editBtn.addEventListener("click", () => ShowLinkModal(index), true);
 
-  var delIcon = document.createElement("i");
+  let delIcon = document.createElement("i");
   delIcon.classList.add("bi-trash");
 
-  var delBtn = document.createElement("button");
+  let delBtn = document.createElement("button");
   delBtn.type = "button";
   delBtn.classList.add("btn");
   delBtn.classList.add("btn-xs");
   delBtn.classList.add("btn-outline-danger");
   delBtn.appendChild(delIcon);
 
-  var div = document.createElement("div");
+  let div = document.createElement("div");
   div.classList.add("align-middle");
   div.classList.add("btn-group");
   div.classList.add("float-end");
@@ -194,33 +236,11 @@ function AddItemToLinksList(linksListElement, index, url) {
   entry.classList.add("list-group-item");
 
   linksListElement.appendChild(entry);
-
-  document
-    .getElementById("editLink" + index)
-    .addEventListener("click", async () => ShowLinkModal(index));
 }
 
 /**************************************************** on load */
 window.onload = function () {
   AddOptionsListeners();
-
-  // dummy load for initial testing (DELETE LATER)
-  chrome.storage.sync.set({
-    readerLinks: [
-      {
-        url: "https://www.bbc.com",
-        days: "1010100",
-      },
-      {
-        url: "https://www.usbank.com/index.html",
-        days: "1111100",
-      },
-      {
-        url: "https://trello.com/u/tombarrett2/boards",
-        days: "0000011",
-      },
-    ],
-  });
 
   chrome.storage.sync.get(async (items) => LoadDataFromStorage(items));
 
