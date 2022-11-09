@@ -1,5 +1,5 @@
 /**************************************************** do something on Chrome start */
-chrome.runtime.onInstalled.addListener(() => {});
+chrome.runtime.onInstalled.addListener(() => { });
 
 /**************************************************** listen for storage changes (debugging) */
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -13,30 +13,60 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 
 /**************************************************** execute action on click */
 chrome.action.onClicked.addListener(async () => {
-  chrome.storage.sync.get("optionsSelectLocation", function (opt) {
-    if (opt == undefined || opt.value == "existing") {
-      // why double name to get?
-      chrome.windows.getCurrent(async (window) => {
-        doAction(window, false);
-      });
-    } else {
-      chrome.windows.create({ focused: true }, async (window) => {
-        doAction(window, true);
-      });
-    }
+  const d = new Date();
+  let currentDay = d.getDay();
+
+  chrome.storage.sync.get(async (data) => {
+    LoadReaderLinks(data, currentDay);
   });
 });
 
-function doAction(window, removeHomeTab) {
-  // TODO check current date
-  // TODO get list of tabs to open
-  // TODO get tab open order
-  // TODO open tabs
+function LoadReaderLinks(data, currentDay) {
+  const { optionsSelectLocation } = data;
+  if (optionsSelectLocation == undefined)
+    optionsSelectLocation = "existing";
 
-  chrome.tabs.create({
-    url: "https://www.bbc.com",
-    windowId: window.id,
-    selected: false,
+  const { optionsSelectOrder } = data;
+  if (optionsSelectOrder == undefined)
+    optionsSelectOrder = "list";
+
+  let readerLinks = data["readerLinks"];
+  if (readerLinks == undefined) {
+    console.log("No reader links are defined."); // DEBUG
+    return;
+  }
+  readerLinks = readerLinks.filter(x => x["days"].charAt(currentDay) === "1");
+  if (readerLinks.length === 0) {
+    console.log("Nothing to read today."); // DEBUG
+    return;
+  }
+
+  if (optionsSelectOrder === "random") {
+    readerLinks = readerLinks
+      .map(value => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
+  }
+
+  if (optionsSelectLocation === "existing") {
+    chrome.windows.getCurrent(async (window) => {
+      doAction(window, false, readerLinks);
+    });
+  }
+  else {
+    chrome.windows.create({ focused: true }, async (window) => {
+      doAction(window, true, readerLinks);
+    });
+  }
+}
+
+function doAction(window, removeHomeTab, readerLinks) {
+  readerLinks.forEach(function (o) {
+    chrome.tabs.create({
+      url: o["url"],
+      windowId: window.id,
+      selected: false,
+    });
   });
 
   if (removeHomeTab) {
@@ -45,7 +75,3 @@ function doAction(window, removeHomeTab) {
     });
   }
 }
-
-/*
-
-*/

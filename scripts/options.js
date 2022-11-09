@@ -1,9 +1,10 @@
 /**************************************************** variables */
-var optionsSelectLocation = "existing";
-var optionsSelectOrder = "list";
-var readerLinks = []; /* data object */
+var currentOptionsSelectLocation = "existing";
+var currentOptionsSelectOrder = "list";
+var readerLinks = [];
 
 var linkModal;
+var deleteModal;
 
 /**************************************************** functions */
 const byteSize = (str) => new Blob([str]).size;
@@ -12,13 +13,13 @@ async function AddOptionsListeners() {
   // dropdowns
   let location = document.getElementById("optionsSelectLocation");
   location.addEventListener("change", async () => {
-    optionsSelectLocation = location.value;
+    currentOptionsSelectLocation = location.value;
     chrome.storage.sync.set({ optionsSelectLocation: location.value });
   });
 
   let order = document.getElementById("optionsSelectOrder");
   order.addEventListener("change", async () => {
-    optionsSelectOrder = order.value;
+    currentOptionsSelectOrder = order.value;
     chrome.storage.sync.set({ optionsSelectOrder: order.value });
   });
 
@@ -30,11 +31,23 @@ async function AddOptionsListeners() {
   document
     .getElementById("linkModalSaveChanges")
     .addEventListener("click", async () => SaveLinkModal());
+
   document
     .getElementById("linkModalSaveChanges")
     .addEventListener("keypress", async (e) => {
       if (e.key == "Enter")
         SaveLinkModal();
+    });
+
+  document
+    .getElementById("modalDelete")
+    .addEventListener("click", async () => DeleteLinkConfirmed());
+
+  document
+    .getElementById("modalDelete")
+    .addEventListener("keypress", async (e) => {
+      if (e.key == "Enter")
+        DeleteLinkConfirmed();
     });
 
   // inputs
@@ -45,11 +58,6 @@ async function AddOptionsListeners() {
         SaveLinkModal();
     });
 
-  // debugging
-  document
-    .getElementById("clearStorage")
-    .addEventListener("click", () => ClearStorage());
-
   // modal
   document
     .getElementById("linkModal")
@@ -58,24 +66,17 @@ async function AddOptionsListeners() {
     });
 }
 
-// debug function
-function ClearStorage() {
-  result = confirm("Delete Chrome storage sync?");
-  if (result) {
-    chrome.storage.sync.clear();
-  }
-}
-
 async function SaveLinkModal() {
   // stop if object size will exceed storage
   let tmpReaderLinks = structuredClone(readerLinks);
-  let newDays = "" + (+document.getElementById("linkMonday").checked)
+  let newDays = ""
+    + (+document.getElementById("linkSunday").checked)
+    + (+document.getElementById("linkMonday").checked)
     + (+document.getElementById("linkTuesday").checked)
     + (+document.getElementById("linkWednesday").checked)
     + (+document.getElementById("linkThursday").checked)
     + (+document.getElementById("linkFriday").checked)
-    + (+document.getElementById("linkSaturday").checked)
-    + (+document.getElementById("linkSunday").checked);
+    + (+document.getElementById("linkSaturday").checked);
   let newUrl = document.getElementById("linkUrl").value;
   let linkIndex = document.getElementById("modalId").innerHTML;
 
@@ -119,25 +120,25 @@ async function ShowLinkModal(id) {
 
     document.getElementById("linkUrl").value = obj["url"];
 
-    document.getElementById("linkMonday").checked = parseInt(
+    document.getElementById("linkSunday").checked = parseInt(
       obj["days"].charAt(0)
     );
-    document.getElementById("linkTuesday").checked = parseInt(
+    document.getElementById("linkMonday").checked = parseInt(
       obj["days"].charAt(1)
     );
-    document.getElementById("linkWednesday").checked = parseInt(
+    document.getElementById("linkTuesday").checked = parseInt(
       obj["days"].charAt(2)
     );
-    document.getElementById("linkThursday").checked = parseInt(
+    document.getElementById("linkWednesday").checked = parseInt(
       obj["days"].charAt(3)
     );
-    document.getElementById("linkFriday").checked = parseInt(
+    document.getElementById("linkThursday").checked = parseInt(
       obj["days"].charAt(4)
     );
-    document.getElementById("linkSaturday").checked = parseInt(
+    document.getElementById("linkFriday").checked = parseInt(
       obj["days"].charAt(5)
     );
-    document.getElementById("linkSunday").checked = parseInt(
+    document.getElementById("linkSaturday").checked = parseInt(
       obj["days"].charAt(6)
     );
     document.getElementById("modalId").innerHTML = id;
@@ -146,33 +147,57 @@ async function ShowLinkModal(id) {
   linkModal.show();
 }
 
+function DeleteLinkModal(id, title, body) {
+  document.getElementById("deleteId").innerHTML = id;
+  document.getElementById("deleteModalTitle").innerHTML = title;
+  document.getElementById("deleteModalBody").innerHTML = body;
+
+  deleteModal.show();
+}
+
+async function DeleteLinkConfirmed() {
+  let linkIndex = document.getElementById("deleteId").innerHTML;
+  readerLinks.splice(linkIndex, 1);
+
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  document.getElementById("linksList").innerHTML = "";
+  readerLinks.forEach((item, index) =>
+    AddItemToLinksList(linksList, index, item["url"])
+  );
+
+  deleteModal.hide();
+}
+
 function ClearLinkModal() {
   document.getElementById("linkUrl").value = "";
   document.getElementById("modalId").innerHTML = -1;
 
+  document.getElementById("linkSunday").checked = false;
   document.getElementById("linkMonday").checked = false;
   document.getElementById("linkTuesday").checked = false;
   document.getElementById("linkWednesday").checked = false;
   document.getElementById("linkThursday").checked = false;
   document.getElementById("linkFriday").checked = false;
   document.getElementById("linkSaturday").checked = false;
-  document.getElementById("linkSunday").checked = false;
 }
 
 async function LoadDataFromStorage(items) {
   // dropdowns
-  const { tmpOptionsSelectLocation } = items;
-  if (tmpOptionsSelectLocation != undefined) {
+  const { optionsSelectLocation } = items;
+  if (optionsSelectLocation != undefined) {
     let e = document.getElementById("optionsSelectLocation");
-    e.value = tmpOptionsSelectLocation;
-    optionsSelectLocation = tmpOptionsSelectLocation;
+    e.value = optionsSelectLocation;
+    currentOptionsSelectLocation = optionsSelectLocation;
   }
 
-  const { tmpOptionsSelectOrder } = items;
-  if (tmpOptionsSelectOrder != undefined) {
+  const { optionsSelectOrder } = items;
+  if (optionsSelectOrder != undefined) {
     let e = document.getElementById("optionsSelectOrder");
-    e.value = tmpOptionsSelectOrder;
-    optionsSelectOrder = tmpOptionsSelectOrder;
+    e.value = optionsSelectOrder;
+    currentOptionsSelectOrder = optionsSelectOrder;
   }
 
   // links
@@ -221,7 +246,9 @@ function AddItemToLinksList(linksListElement, index, url) {
   delBtn.classList.add("btn");
   delBtn.classList.add("btn-xs");
   delBtn.classList.add("btn-outline-danger");
+  delBtn.id = "deleteLink" + index;
   delBtn.appendChild(delIcon);
+  delBtn.addEventListener("click", () => DeleteLinkModal(index, "Confirm delete", "Delete link " + url + "?"), true);
 
   let div = document.createElement("div");
   div.classList.add("align-middle");
@@ -245,4 +272,6 @@ window.onload = function () {
   chrome.storage.sync.get(async (items) => LoadDataFromStorage(items));
 
   linkModal = new bootstrap.Modal(document.getElementById("linkModal"));
+
+  deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
 };
