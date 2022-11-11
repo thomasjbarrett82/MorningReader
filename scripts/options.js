@@ -50,6 +50,66 @@ async function AddOptionsListeners() {
         DeleteLinkConfirmed();
     });
 
+  document
+    .getElementById("presetAll")
+    .addEventListener("click", async function () {
+      document.getElementById("linkSunday").checked = true;
+      document.getElementById("linkMonday").checked = true;
+      document.getElementById("linkTuesday").checked = true;
+      document.getElementById("linkWednesday").checked = true;
+      document.getElementById("linkThursday").checked = true;
+      document.getElementById("linkFriday").checked = true;
+      document.getElementById("linkSaturday").checked = true;
+    });
+
+  document
+    .getElementById("presetNone")
+    .addEventListener("click", async function () {
+      document.getElementById("linkSunday").checked = false;
+      document.getElementById("linkMonday").checked = false;
+      document.getElementById("linkTuesday").checked = false;
+      document.getElementById("linkWednesday").checked = false;
+      document.getElementById("linkThursday").checked = false;
+      document.getElementById("linkFriday").checked = false;
+      document.getElementById("linkSaturday").checked = false;
+    });
+
+  document
+    .getElementById("presetMWF")
+    .addEventListener("click", async function () {
+      document.getElementById("linkSunday").checked = false;
+      document.getElementById("linkMonday").checked = true;
+      document.getElementById("linkTuesday").checked = false;
+      document.getElementById("linkWednesday").checked = true;
+      document.getElementById("linkThursday").checked = false;
+      document.getElementById("linkFriday").checked = true;
+      document.getElementById("linkSaturday").checked = false;
+    });
+
+  document
+    .getElementById("presetWeekdays")
+    .addEventListener("click", async function () {
+      document.getElementById("linkSunday").checked = false;
+      document.getElementById("linkMonday").checked = true;
+      document.getElementById("linkTuesday").checked = true;
+      document.getElementById("linkWednesday").checked = true;
+      document.getElementById("linkThursday").checked = true;
+      document.getElementById("linkFriday").checked = true;
+      document.getElementById("linkSaturday").checked = false;
+    });
+
+  document
+    .getElementById("presetWeekends")
+    .addEventListener("click", async function () {
+      document.getElementById("linkSunday").checked = true;
+      document.getElementById("linkMonday").checked = false;
+      document.getElementById("linkTuesday").checked = false;
+      document.getElementById("linkWednesday").checked = false;
+      document.getElementById("linkThursday").checked = false;
+      document.getElementById("linkFriday").checked = false;
+      document.getElementById("linkSaturday").checked = true;
+    });
+
   // inputs
   document
     .getElementById("linkUrl")
@@ -163,12 +223,44 @@ async function DeleteLinkConfirmed() {
     readerLinks: readerLinks
   });
 
+  ReloadReaderLinks();
+
+  deleteModal.hide();
+}
+
+function ReloadReaderLinks() {
   document.getElementById("linksList").innerHTML = "";
   readerLinks.forEach((item, index) =>
     AddItemToLinksList(linksList, index, item["url"])
   );
+}
 
-  deleteModal.hide();
+// moving down in list means index goes up
+function MoveLinkDown(index) {
+  if (index === readerLinks.length-1) {
+    return;
+  }
+  [readerLinks[index], readerLinks[index+1]] = [readerLinks[index+1], readerLinks[index]];
+
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  ReloadReaderLinks();
+}
+
+// moving up in list means index goes down
+function MoveLinkUp(index) {
+  if (index === 0) {
+    return;
+  }
+  [readerLinks[index], readerLinks[index-1]] = [readerLinks[index-1], readerLinks[index]];
+
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  ReloadReaderLinks();
 }
 
 function ClearLinkModal() {
@@ -226,6 +318,30 @@ function AddItemToLinksList(linksListElement, index, url) {
   span.classList.add("float-start");
   span.appendChild(link);
 
+  let upIcon = document.createElement("i");
+  upIcon.classList.add("bi-arrow-up");
+
+  let upBtn = document.createElement("button");
+  upBtn.type = "button";
+  upBtn.classList.add("btn");
+  upBtn.classList.add("btn-xs");
+  upBtn.classList.add("btn-outline-primary");
+  upBtn.id = "up" + index;
+  upBtn.appendChild(upIcon);
+  upBtn.addEventListener("click", async () => MoveLinkUp(index), true); 
+
+  let downIcon = document.createElement("i");
+  downIcon.classList.add("bi-arrow-down");
+
+  let downBtn = document.createElement("button");
+  downBtn.type = "button";
+  downBtn.classList.add("btn");
+  downBtn.classList.add("btn-xs");
+  downBtn.classList.add("btn-outline-primary");
+  downBtn.id = "down" + index;
+  downBtn.appendChild(downIcon);
+  downBtn.addEventListener("click", async () => MoveLinkDown(index), true); 
+
   let editIcon = document.createElement("i");
   editIcon.classList.add("bi-pencil-square");
 
@@ -255,6 +371,8 @@ function AddItemToLinksList(linksListElement, index, url) {
   div.classList.add("btn-group");
   div.classList.add("float-end");
   div.setAttribute("role", "group");
+  div.appendChild(upBtn);
+  div.appendChild(downBtn);
   div.appendChild(editBtn);
   div.appendChild(delBtn);
 
