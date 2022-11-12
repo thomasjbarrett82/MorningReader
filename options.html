@@ -35,7 +35,6 @@
                         <ul class="list-group list-group-flush" id="linksList"></ul>
                         <div class="card-body">
                             <button type="button" class="btn btn-success" id="addLink">
-                                <!--<button type="button" class="btn btn-success" id="addLink" data-bs-toggle="modal" data-bs-target="#linkModal">-->
                                 +
                             </button>
                         </div>
@@ -78,20 +77,6 @@
                             </li>
                         </ul>
                     </div>
-
-                    <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#changeHistory" aria-expanded="false" aria-controls="changeHistory">
-                        Change History (TODO)
-                    </button>
-                    <div class="collapse" id="changeHistory">
-                        <div class="card">
-                            <h4 class="card-title">1.0.0
-                        </div>
-                        <div class="card-body">
-                            Some placeholder content for the collapse component. This panel is hidden by default but
-                            revealed when the user activates the relevant trigger.
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -99,13 +84,10 @@
 
     <footer class="mt-auto">
         <div class="container text-center">
-            <!--
             <div class="row">
-                <button type="button" class="btn btn-danger" id="clearStorage">Clear Storage</button>
-            </div>
-            -->
-            <div class="row">
-                <div>TODO GitHub link</div>
+                <div>
+                    <a href="https://github.com/thomasjbarrett82/MorningReader" target="_blank">GitHub</a>
+                </div>
             </div>
             <div class="row">
                 <div>Icon source:
@@ -162,7 +144,7 @@
                     <button type="button" class="btn btn-outline-primary" id="presetMWF">M-W-F</button>
                     <button type="button" class="btn btn-outline-primary" id="presetWeekdays">Weekdays</button>
                     <button type="button" class="btn btn-outline-primary" id="presetWeekends">Weekends</button>
-                  </div>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="linkModalSaveChanges">Save changes</button>
@@ -187,6 +169,26 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="modalDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-xl fade" id="bookmarksModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Import bookmarks</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body" id="bookmarksModalBody">
+                    <ul class="list-group" id="bookmarksModalList"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="bookmarksImportConfirm">Import</button>
                 </div>
             </div>
         </div>

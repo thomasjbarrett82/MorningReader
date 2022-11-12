@@ -5,6 +5,7 @@ var readerLinks = [];
 
 var linkModal;
 var deleteModal;
+var bookmarksModal;
 
 /**************************************************** functions */
 const byteSize = (str) => new Blob([str]).size;
@@ -110,6 +111,18 @@ async function AddOptionsListeners() {
       document.getElementById("linkSaturday").checked = true;
     });
 
+  document
+    .getElementById("importBookmarks")
+    .addEventListener("click", async () => ShowBookmarksModal());
+
+  document
+    .getElementById("bookmarksImportConfirm")
+    .addEventListener("click", async () => ImportSelectedBookmarks());
+
+    document
+      .getElementById("saveToFile")
+      .addEventListener("click", async () => SaveReaderLinksToFile());
+
   // inputs
   document
     .getElementById("linkUrl")
@@ -124,6 +137,109 @@ async function AddOptionsListeners() {
     .addEventListener("shown.bs.modal", () => {
       document.getElementById("linkUrl").focus();
     });
+}
+
+async function SaveReaderLinksToFile() {
+  let blob = new Blob([JSON.stringify(readerLinks)], { type: "application/json"});
+  let blobUrl = window.URL.createObjectURL(blob);
+
+  chrome.downloads.download({
+    url: blobUrl,
+    filename: "readerLinks_" + new Date().toJSON().slice(0,10) + ".json"
+  });
+
+  const notificationId = "" + Math.floor(Math.random() * 100000) + 1;
+  const options = {
+    type: "basic",
+    iconUrl: "images/icon128.png",
+    title: "Morning Reader",
+    message: "Reader links downloaded as JSON file."
+  };
+  const callback = notificationId => console.log('notificationId: ', notificationId)
+  chrome.notifications.create(notificationId, options, callback)
+}
+
+async function ImportSelectedBookmarks() {
+  let bookmarksListItems = document
+    .getElementById("bookmarksModalList")
+    .getElementsByTagName("li");
+
+  for (var i = 0; i < bookmarksListItems.length; i++) {
+    let item = bookmarksListItems[i].firstChild;
+    if (item.checked) {
+      readerLinks.push({
+        days: "0000000",
+        url: item.id
+      });
+    }
+  }
+
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  ReloadReaderLinks();
+
+  bookmarksModal.hide();
+}
+
+async function ShowBookmarksModal() {
+  let bookmarksList = document.getElementById("bookmarksModalList");
+  bookmarksList.innerHTML = "";
+
+  chrome.bookmarks.getTree(function (tree) {
+    tree.forEach(function (item) {
+      ProcessBookmarkNode(item, 0, bookmarksList);
+    })
+  });
+
+  bookmarksModal.show();
+}
+
+function ProcessBookmarkNode(node, level, bookmarksList) {
+  if (node.children) {
+    AddBookmarkNodeItem(bookmarksList, node.title, level, false);
+    node.children.forEach(function (child) {
+      ProcessBookmarkNode(child, level + 2, bookmarksList);
+    })
+  }
+
+  if (node.url) {
+    AddBookmarkNodeItem(bookmarksList, node.url, level, true);
+  }
+}
+
+function AddBookmarkNodeItem(bookmarksList, nodeText, level, isUrl) {
+  let spacing = "\xa0".repeat(level);
+
+  let entry = document.createElement("li");
+  entry.classList.add("list-group-item");
+
+  if (isUrl) {
+    let nodeInput = document.createElement("input");
+    nodeInput.type = "checkbox";
+    nodeInput.value = "";
+    nodeInput.classList.add("form-check-input");
+    nodeInput.classList.add("me-1");
+    nodeInput.id = nodeText;
+    entry.appendChild(nodeInput);
+
+    let nodeLabel = document.createElement("label");
+    nodeLabel.classList.add("form-check-label");
+    nodeLabel.classList.add("stretched-link");
+    nodeLabel.htmlFor = nodeText;
+    nodeLabel.innerHTML = spacing + nodeText;
+    entry.appendChild(nodeLabel);
+  }
+  else {
+    let nodeLabel = document.createElement("label");
+    nodeLabel.classList.add("form-check-label");
+    nodeLabel.classList.add("fw-bold");
+    nodeLabel.innerHTML = spacing + nodeText;
+    entry.appendChild(nodeLabel);
+  }
+
+  bookmarksList.appendChild(entry);
 }
 
 async function SaveLinkModal() {
@@ -163,10 +279,7 @@ async function SaveLinkModal() {
       readerLinks: tmpReaderLinks
     });
 
-    document.getElementById("linksList").innerHTML = "";
-    readerLinks.forEach((item, index) =>
-      AddItemToLinksList(linksList, index, item["url"])
-    );
+    ReloadReaderLinks();
   }
 
   linkModal.hide();
@@ -237,10 +350,10 @@ function ReloadReaderLinks() {
 
 // moving down in list means index goes up
 function MoveLinkDown(index) {
-  if (index === readerLinks.length-1) {
+  if (index === readerLinks.length - 1) {
     return;
   }
-  [readerLinks[index], readerLinks[index+1]] = [readerLinks[index+1], readerLinks[index]];
+  [readerLinks[index], readerLinks[index + 1]] = [readerLinks[index + 1], readerLinks[index]];
 
   chrome.storage.sync.set({
     readerLinks: readerLinks
@@ -254,7 +367,7 @@ function MoveLinkUp(index) {
   if (index === 0) {
     return;
   }
-  [readerLinks[index], readerLinks[index-1]] = [readerLinks[index-1], readerLinks[index]];
+  [readerLinks[index], readerLinks[index - 1]] = [readerLinks[index - 1], readerLinks[index]];
 
   chrome.storage.sync.set({
     readerLinks: readerLinks
@@ -305,6 +418,7 @@ async function LoadDataFromStorage(items) {
 
 function AddItemToLinksList(linksListElement, index, url) {
   let entry = document.createElement("li");
+  entry.classList.add("list-group-item");
 
   let link = document.createElement("a");
   link.setAttribute("href", url);
@@ -328,7 +442,7 @@ function AddItemToLinksList(linksListElement, index, url) {
   upBtn.classList.add("btn-outline-primary");
   upBtn.id = "up" + index;
   upBtn.appendChild(upIcon);
-  upBtn.addEventListener("click", async () => MoveLinkUp(index), true); 
+  upBtn.addEventListener("click", async () => MoveLinkUp(index), true);
 
   let downIcon = document.createElement("i");
   downIcon.classList.add("bi-arrow-down");
@@ -340,7 +454,7 @@ function AddItemToLinksList(linksListElement, index, url) {
   downBtn.classList.add("btn-outline-primary");
   downBtn.id = "down" + index;
   downBtn.appendChild(downIcon);
-  downBtn.addEventListener("click", async () => MoveLinkDown(index), true); 
+  downBtn.addEventListener("click", async () => MoveLinkDown(index), true);
 
   let editIcon = document.createElement("i");
   editIcon.classList.add("bi-pencil-square");
@@ -378,7 +492,6 @@ function AddItemToLinksList(linksListElement, index, url) {
 
   entry.appendChild(span);
   entry.appendChild(div);
-  entry.classList.add("list-group-item");
 
   linksListElement.appendChild(entry);
 }
@@ -390,6 +503,6 @@ window.onload = function () {
   chrome.storage.sync.get(async (items) => LoadDataFromStorage(items));
 
   linkModal = new bootstrap.Modal(document.getElementById("linkModal"));
-
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+  bookmarksModal = new bootstrap.Modal(document.getElementById("bookmarksModal"));
 };
