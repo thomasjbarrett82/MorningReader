@@ -119,9 +119,13 @@ async function AddOptionsListeners() {
     .getElementById("bookmarksImportConfirm")
     .addEventListener("click", async () => ImportSelectedBookmarks());
 
-    document
-      .getElementById("saveToFile")
-      .addEventListener("click", async () => SaveReaderLinksToFile());
+  document
+    .getElementById("saveToFile")
+    .addEventListener("click", async () => SaveReaderLinksToFile());
+
+  document
+    .getElementById("loadFromFile")
+    .addEventListener("click", async () => LoadReaderLinksFromFile());
 
   // inputs
   document
@@ -139,13 +143,46 @@ async function AddOptionsListeners() {
     });
 }
 
+async function LoadReaderLinksFromFile() {
+  const options = {
+    startIn: "documents",
+    types: [
+      {
+        accept: {
+          "application/json": [".json"]
+        }
+      }
+    ],
+    excludeAcceptAllOption: true,
+    multiple: false
+  };
+
+  const [fileHandle] = await window.showOpenFilePicker(options);
+  const file = await fileHandle.getFile();
+  const fileText = await file.text();
+  const newReaderLinks = JSON.parse(fileText);
+
+  newReaderLinks.forEach(async (item) => {
+    readerLinks.push({
+      days: item.days,
+      url: item.url
+    });
+  });
+
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  ReloadReaderLinks();
+}
+
 async function SaveReaderLinksToFile() {
-  let blob = new Blob([JSON.stringify(readerLinks)], { type: "application/json"});
+  let blob = new Blob([JSON.stringify(readerLinks)], { type: "application/json" });
   let blobUrl = window.URL.createObjectURL(blob);
 
   chrome.downloads.download({
     url: blobUrl,
-    filename: "readerLinks_" + new Date().toJSON().slice(0,10) + ".json"
+    filename: "readerLinks_" + new Date().toJSON().slice(0, 10) + ".json"
   });
 
   const notificationId = "" + Math.floor(Math.random() * 100000) + 1;
