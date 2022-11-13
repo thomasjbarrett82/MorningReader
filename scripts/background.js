@@ -1,4 +1,18 @@
 /**************************************************** do something on Chrome start */
+chrome.runtime.onStartup.addListener(() => {
+  chrome.storage.sync.get((items) => {
+    const { optionsOpenOnStartup } = items;
+    if (optionsOpenOnStartup == undefined || optionsOpenOnStartup === false) {
+      return;
+    }
+    else if (optionsOpenOnStartup === true) {
+      chrome.storage.sync.get(async (data) => {
+        LoadReaderLinks(data);
+      });
+    }
+  });
+});
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => { });
 
@@ -46,15 +60,12 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 
 /**************************************************** execute action on click */
 chrome.action.onClicked.addListener(async () => {
-  const d = new Date();
-  let currentDay = d.getDay();
-
   chrome.storage.sync.get(async (data) => {
-    LoadReaderLinks(data, currentDay);
+    LoadReaderLinks(data);
   });
 });
 
-function LoadReaderLinks(data, currentDay) {
+function LoadReaderLinks(data) {
   const { optionsSelectLocation } = data;
   if (optionsSelectLocation == undefined)
     optionsSelectLocation = "existing";
@@ -68,6 +79,10 @@ function LoadReaderLinks(data, currentDay) {
     console.log("No reader links are defined."); // DEBUG
     return;
   }
+
+  const d = new Date();
+  let currentDay = d.getDay();
+
   readerLinks = readerLinks.filter(x => x["days"].charAt(currentDay) === "1");
   if (readerLinks.length === 0) {
     console.log("Nothing to read today."); // DEBUG

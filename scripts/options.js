@@ -25,6 +25,12 @@ async function AddOptionsListeners() {
     chrome.storage.sync.set({ optionsSelectOrder: order.value });
   });
 
+  let startUp = document.getElementById("optionsOpenOnStartup");
+  startUp.addEventListener("change", async () => {
+    currentOptionsOpenOnStartup = startUp.checked;
+    chrome.storage.sync.set({ optionsOpenOnStartup: startUp.checked });
+  });
+
   // buttons
   document
     .getElementById("addLink")
@@ -441,6 +447,13 @@ async function LoadDataFromStorage(items) {
     let e = document.getElementById("optionsSelectOrder");
     e.value = optionsSelectOrder;
     currentOptionsSelectOrder = optionsSelectOrder;
+  }
+
+  const { optionsOpenOnStartup } = items;
+  if (optionsOpenOnStartup != undefined) {
+    let e = document.getElementById("optionsOpenOnStartup");
+    e.checked = optionsOpenOnStartup;
+    currentOptionsOpenOnStartup = optionsOpenOnStartup;
   }
 
   // links
