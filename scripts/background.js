@@ -1,5 +1,38 @@
 /**************************************************** do something on Chrome start */
-chrome.runtime.onInstalled.addListener(() => { });
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.removeAll(() => { });
+
+  let addPageParent = chrome.contextMenus.create({
+    "title": "Add current page to Morning Reader",
+    "id": "addPageToMorningReader",
+    "contexts": ["all"]
+  });
+
+  let all = chrome.contextMenus.create({
+    "title": "All Days",
+    "id": "addPageAllDays",
+    "parentId": addPageParent,
+    "contexts": ["all"]
+  });
+  let mwf = chrome.contextMenus.create({
+    "title": "M-W-F",
+    "id": "addPageMWF",
+    "parentId": addPageParent,
+    "contexts": ["all"]
+  });
+  let weekdays = chrome.contextMenus.create({
+    "title": "Weekdays",
+    "id": "addPageWeekdays",
+    "parentId": addPageParent,
+    "contexts": ["all"]
+  });
+  let weekends = chrome.contextMenus.create({
+    "title": "Weekends",
+    "id": "addPageWeekends",
+    "parentId": addPageParent,
+    "contexts": ["all"]
+  });
+});
 
 /**************************************************** listen for storage changes (debugging) */
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -74,4 +107,64 @@ function doAction(window, removeHomeTab, readerLinks) {
       chrome.tabs.remove(tabs[0].id);
     });
   }
+}
+
+/**************************************************** add current page to context menu */
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (tab) {
+    onClickContextHandler(info, tab);
+  }
+});
+
+function onClickContextHandler(info, tab) {
+  let days = "0000000";
+
+  switch (info.menuItemId) {
+    case "addPageToMorningReader":
+      console.log("Context menu for Morning Reader was clicked.");
+      return;
+    case "addPageAllDays":
+      days = "1111111"
+      break;
+    case "addPageMWF":
+      days = "0101010"
+      break;
+    case "addPageWeekdays":
+      days = "0111110"
+      break;
+    case "addPageWeekends":
+      days = "1000001"
+      break;
+    default:
+      return;
+  }
+
+  chrome.storage.sync.get(async (items) => {
+    readerLinks = items["readerLinks"];
+    if (readerLinks == undefined) {
+      readerLinks = [];
+    }
+    readerLinks.push({
+      days: days,
+      url: tab.url
+    });
+
+    let tmpBytes = new Blob([JSON.stringify(readerLinks)]).size;
+    if (tmpBytes >= 8192) {
+      const notificationId = "" + Math.floor(Math.random() * 100000) + 1;
+      const options = {
+        type: "basic",
+        iconUrl: "images/icon128.png",
+        title: "Morning Reader",
+        message: "Too many links to read, exceeds 8 KB sync storage size, please delete some first."
+      };
+      const callback = notificationId => console.log('notificationId: ', notificationId)
+      chrome.notifications.create(notificationId, options, callback)
+      return;
+    }
+
+    chrome.storage.sync.set({
+      readerLinks: readerLinks
+    });
+  });
 }

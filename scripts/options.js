@@ -1,6 +1,7 @@
 /**************************************************** variables */
 var currentOptionsSelectLocation = "existing";
 var currentOptionsSelectOrder = "list";
+var currentOptionsOpenOnStartup = false;
 var readerLinks = [];
 
 var linkModal;
