@@ -66,11 +66,11 @@ chrome.action.onClicked.addListener(async () => {
 });
 
 function LoadReaderLinks(data) {
-  const { optionsSelectLocation } = data;
+  let { optionsSelectLocation } = data;
   if (optionsSelectLocation == undefined)
     optionsSelectLocation = "existing";
 
-  const { optionsSelectOrder } = data;
+  let { optionsSelectOrder } = data;
   if (optionsSelectOrder == undefined)
     optionsSelectOrder = "list";
 
