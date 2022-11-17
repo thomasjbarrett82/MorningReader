@@ -18,7 +18,7 @@ Easy way to load up your morning reading websites. Synchronizes with your browse
 
 ## History
 
-2022-11-13 v1.0.0
+- 2022-11-13 v1.0.0
 
 Initial release.
 
