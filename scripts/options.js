@@ -469,17 +469,31 @@ function AddItemToLinksList(linksListElement, index, url) {
   let entry = document.createElement("li");
   entry.classList.add("list-group-item");
 
-  let link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("target", "_blank");
-  link.innerHTML = url;
+  // Hidden div containing the full URL
+  let hiddenUrlDiv = document.createElement("div");
+  hiddenUrlDiv.style.display = "none";
+  hiddenUrlDiv.textContent = url;
+
+  // Label element that will show truncated text
+  let label = document.createElement("label");
+  label.classList.add("link-label");
+  label.textContent = url;
+  label.style.cursor = "pointer";
+  label.setAttribute("title", url); // Show full URL on hover
+  
+  // Make label clickable to open link in new tab
+  label.addEventListener("click", () => {
+    window.open(url, "_blank");
+  });
 
   let span = document.createElement("span");
   span.id = index;
   span.classList.add("d-inline-block");
   span.classList.add("align-middle");
   span.classList.add("float-start");
-  span.appendChild(link);
+  span.classList.add("link-container");
+  span.appendChild(hiddenUrlDiv);
+  span.appendChild(label);
 
   let editIcon = document.createElement("i");
   editIcon.classList.add("bi-pencil-square");

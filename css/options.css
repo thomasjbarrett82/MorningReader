@@ -69,3 +69,25 @@
     padding: 16px 12px;
   }
 }
+
+/* Link label truncation */
+.link-container {
+  max-width: calc(100% - 100px); /* Reserve space for buttons */
+  overflow: hidden;
+}
+
+.link-label {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0d6efd; /* Bootstrap link blue */
+  text-decoration: none;
+  margin: 0;
+  max-width: 100%;
+}
+
+.link-label:hover {
+  color: #0a58ca; /* Bootstrap link hover blue */
+  text-decoration: underline;
+}
