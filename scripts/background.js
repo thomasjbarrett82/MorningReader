@@ -109,19 +109,30 @@ function LoadReaderLinks(data) {
 }
 
 function doAction(window, removeHomeTab, readerLinks) {
-  readerLinks.forEach(function (o) {
-    chrome.tabs.create({
-      url: o["url"],
-      windowId: window.id,
-      selected: false,
+  // Get the currently active tab before creating new ones
+  chrome.tabs.query({ windowId: window.id, active: true }, function (tabs) {
+    const activeTabId = tabs[0]?.id;
+    
+    readerLinks.forEach(function (o) {
+      chrome.tabs.create({
+        url: o["url"],
+        windowId: window.id,
+        selected: false,
+        active: false, // Explicitly set to false
+      });
     });
-  });
 
-  if (removeHomeTab) {
-    chrome.tabs.query({ windowId: window.id }, function (tabs) {
-      chrome.tabs.remove(tabs[0].id);
-    });
-  }
+    if (removeHomeTab) {
+      chrome.tabs.query({ windowId: window.id }, function (tabs) {
+        chrome.tabs.remove(tabs[0].id);
+      });
+    }
+    
+    // Restore focus to the original active tab
+    if (activeTabId && !removeHomeTab) {
+      chrome.tabs.update(activeTabId, { active: true });
+    }
+  });
 }
 
 /**************************************************** add current page to context menu */
