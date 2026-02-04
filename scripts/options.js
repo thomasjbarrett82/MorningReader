@@ -8,6 +8,9 @@ var linkModal;
 var deleteModal;
 var bookmarksModal;
 
+// Drag and drop manager
+var dragDropManager;
+
 /**************************************************** functions */
 const byteSize = (str) => new Blob([str]).size;
 
@@ -385,39 +388,31 @@ async function DeleteLinkConfirmed() {
   deleteModal.hide();
 }
 
+// Handle drag-drop reordering
+function HandleDragDropReorder(fromIndex, toIndex) {
+  // Move the item in the array
+  const movedItem = readerLinks.splice(fromIndex, 1)[0];
+  readerLinks.splice(toIndex, 0, movedItem);
+
+  // Save to storage
+  chrome.storage.sync.set({
+    readerLinks: readerLinks
+  });
+
+  // Note: We don't call ReloadReaderLinks() here because the DOM has already been reordered by the drag-drop manager
+  console.log(`Link moved from position ${fromIndex} to ${toIndex}`);
+}
+
 function ReloadReaderLinks() {
   document.getElementById("linksList").innerHTML = "";
   readerLinks.forEach((item, index) =>
     AddItemToLinksList(linksList, index, item["url"])
   );
-}
-
-// moving down in list means index goes up
-function MoveLinkDown(index) {
-  if (index === readerLinks.length - 1) {
-    return;
+  
+  // Refresh drag-drop after rendering links
+  if (dragDropManager) {
+    dragDropManager.refresh();
   }
-  [readerLinks[index], readerLinks[index + 1]] = [readerLinks[index + 1], readerLinks[index]];
-
-  chrome.storage.sync.set({
-    readerLinks: readerLinks
-  });
-
-  ReloadReaderLinks();
-}
-
-// moving up in list means index goes down
-function MoveLinkUp(index) {
-  if (index === 0) {
-    return;
-  }
-  [readerLinks[index], readerLinks[index - 1]] = [readerLinks[index - 1], readerLinks[index]];
-
-  chrome.storage.sync.set({
-    readerLinks: readerLinks
-  });
-
-  ReloadReaderLinks();
 }
 
 function ClearLinkModal() {
@@ -465,6 +460,9 @@ async function LoadDataFromStorage(items) {
   readerLinks.forEach((item, index) =>
     AddItemToLinksList(linksList, index, item["url"])
   );
+  
+  // Initialize drag-drop manager
+  dragDropManager = new DragDropManager('linksList', HandleDragDropReorder);
 }
 
 function AddItemToLinksList(linksListElement, index, url) {
@@ -482,30 +480,6 @@ function AddItemToLinksList(linksListElement, index, url) {
   span.classList.add("align-middle");
   span.classList.add("float-start");
   span.appendChild(link);
-
-  let upIcon = document.createElement("i");
-  upIcon.classList.add("bi-arrow-up");
-
-  let upBtn = document.createElement("button");
-  upBtn.type = "button";
-  upBtn.classList.add("btn");
-  upBtn.classList.add("btn-xs");
-  upBtn.classList.add("btn-outline-primary");
-  upBtn.id = "up" + index;
-  upBtn.appendChild(upIcon);
-  upBtn.addEventListener("click", async () => MoveLinkUp(index), true);
-
-  let downIcon = document.createElement("i");
-  downIcon.classList.add("bi-arrow-down");
-
-  let downBtn = document.createElement("button");
-  downBtn.type = "button";
-  downBtn.classList.add("btn");
-  downBtn.classList.add("btn-xs");
-  downBtn.classList.add("btn-outline-primary");
-  downBtn.id = "down" + index;
-  downBtn.appendChild(downIcon);
-  downBtn.addEventListener("click", async () => MoveLinkDown(index), true);
 
   let editIcon = document.createElement("i");
   editIcon.classList.add("bi-pencil-square");
@@ -536,8 +510,6 @@ function AddItemToLinksList(linksListElement, index, url) {
   div.classList.add("btn-group");
   div.classList.add("float-end");
   div.setAttribute("role", "group");
-  div.appendChild(upBtn);
-  div.appendChild(downBtn);
   div.appendChild(editBtn);
   div.appendChild(delBtn);
 

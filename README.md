@@ -30,3 +30,10 @@ Easy way to load up your morning reading websites. Synchronizes with your browse
 
 - Fixed missing CSS file in release.
 - Added batch file to source code for release builds.
+
+2026-02-04 v1.1.0
+
+- Replaced up/down arrows with drag-and-drop link re-ordering
+- Format long links to hide extra text in display
+- If "Load links in existing window" is set, stay in the current tab when opening links
+- Added "Delete All Links" button

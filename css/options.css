@@ -3,4 +3,69 @@
     font-size: 1rem;
     line-height: .5;
     border-radius: .2rem;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+  display: inline-block;
+  cursor: grab;
+  color: #6c757d;
+  margin-right: 10px;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:hover {
+  color: #495057;
+}
+
+.drag-handle i {
+  font-size: 1.2rem;
+  vertical-align: middle;
+}
+
+/* List item enhancements for drag and drop */
+.list-group-item[draggable="true"] {
+  cursor: move;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* When dragging an item */
+.list-group-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+/* Visual feedback when hovering over a drop target */
+.list-group-item.drag-over {
+  border: 2px dashed #0d6efd;
+  background-color: #e7f1ff;
+  transform: scale(1.02);
+}
+
+/* Add some visual feedback on hover */
+.list-group-item[draggable="true"]:hover {
+  background-color: #f8f9fa;
+}
+
+/* Touch device support */
+@media (hover: none) and (pointer: coarse) {
+  .drag-handle {
+    font-size: 1.5rem;
   }
+  
+  .list-group-item {
+    padding: 16px 12px;
+  }
+}
