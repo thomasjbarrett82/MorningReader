@@ -5,7 +5,7 @@ Easy way to load up your morning reading websites. Synchronizes with your browse
 ## Features
 
 - Create and edit a list of website links for reading.
-- Reorder links in the list.
+- Reorder links in the list with drag and drop
 - Choose days of the week to open each website.
 - One button click to load the list of websites.
 - Right click on a website to add to the list.
@@ -36,4 +36,3 @@ Easy way to load up your morning reading websites. Synchronizes with your browse
 - Replaced up/down arrows with drag-and-drop link re-ordering
 - Format long links to hide extra text in display
 - If "Load links in existing window" is set, stay in the current tab when opening links
-- Added "Delete All Links" button
