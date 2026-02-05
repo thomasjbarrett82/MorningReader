@@ -46,8 +46,7 @@ async function AddOptionsListeners() {
   document
     .getElementById("linkModalSaveChanges")
     .addEventListener("keypress", async (e) => {
-      if (e.key == "Enter")
-        SaveLinkModal();
+      if (e.key == "Enter") SaveLinkModal();
     });
 
   document
@@ -57,8 +56,7 @@ async function AddOptionsListeners() {
   document
     .getElementById("modalDelete")
     .addEventListener("keypress", async (e) => {
-      if (e.key == "Enter")
-        DeleteLinkConfirmed();
+      if (e.key == "Enter") DeleteLinkConfirmed();
     });
 
   document
@@ -138,12 +136,9 @@ async function AddOptionsListeners() {
     .addEventListener("click", async () => LoadReaderLinksFromFile());
 
   // inputs
-  document
-    .getElementById("linkUrl")
-    .addEventListener("keypress", async (e) => {
-      if (e.key == "Enter")
-        SaveLinkModal();
-    });
+  document.getElementById("linkUrl").addEventListener("keypress", async (e) => {
+    if (e.key == "Enter") SaveLinkModal();
+  });
 
   // modal
   document
@@ -159,12 +154,12 @@ async function LoadReaderLinksFromFile() {
     types: [
       {
         accept: {
-          "application/json": [".json"]
-        }
-      }
+          "application/json": [".json"],
+        },
+      },
     ],
     excludeAcceptAllOption: true,
-    multiple: false
+    multiple: false,
   };
 
   const [fileHandle] = await window.showOpenFilePicker(options);
@@ -175,24 +170,26 @@ async function LoadReaderLinksFromFile() {
   newReaderLinks.forEach(async (item) => {
     readerLinks.push({
       days: item.days,
-      url: item.url
+      url: item.url,
     });
   });
 
   chrome.storage.sync.set({
-    readerLinks: readerLinks
+    readerLinks: readerLinks,
   });
 
   ReloadReaderLinks();
 }
 
 async function SaveReaderLinksToFile() {
-  let blob = new Blob([JSON.stringify(readerLinks)], { type: "application/json" });
+  let blob = new Blob([JSON.stringify(readerLinks)], {
+    type: "application/json",
+  });
   let blobUrl = window.URL.createObjectURL(blob);
 
   chrome.downloads.download({
     url: blobUrl,
-    filename: "readerLinks_" + new Date().toJSON().slice(0, 10) + ".json"
+    filename: "readerLinks_" + new Date().toJSON().slice(0, 10) + ".json",
   });
 
   const notificationId = "" + Math.floor(Math.random() * 100000) + 1;
@@ -200,10 +197,11 @@ async function SaveReaderLinksToFile() {
     type: "basic",
     iconUrl: "images/icon128.png",
     title: "Morning Reader",
-    message: "Reader links downloaded as JSON file."
+    message: "Reader links downloaded as JSON file.",
   };
-  const callback = notificationId => console.log('notificationId: ', notificationId)
-  chrome.notifications.create(notificationId, options, callback)
+  const callback = (notificationId) =>
+    console.log("notificationId: ", notificationId);
+  chrome.notifications.create(notificationId, options, callback);
 }
 
 async function ImportSelectedBookmarks() {
@@ -216,13 +214,13 @@ async function ImportSelectedBookmarks() {
     if (item.checked) {
       readerLinks.push({
         days: "0000000",
-        url: item.id
+        url: item.id,
       });
     }
   }
 
   chrome.storage.sync.set({
-    readerLinks: readerLinks
+    readerLinks: readerLinks,
   });
 
   ReloadReaderLinks();
@@ -237,7 +235,7 @@ async function ShowBookmarksModal() {
   chrome.bookmarks.getTree(function (tree) {
     tree.forEach(function (item) {
       ProcessBookmarkNode(item, 0, bookmarksList);
-    })
+    });
   });
 
   bookmarksModal.show();
@@ -248,7 +246,7 @@ function ProcessBookmarkNode(node, level, bookmarksList) {
     AddBookmarkNodeItem(bookmarksList, node.title, level, false);
     node.children.forEach(function (child) {
       ProcessBookmarkNode(child, level + 2, bookmarksList);
-    })
+    });
   }
 
   if (node.url) {
@@ -277,8 +275,7 @@ function AddBookmarkNodeItem(bookmarksList, nodeText, level, isUrl) {
     nodeLabel.htmlFor = nodeText;
     nodeLabel.innerHTML = spacing + nodeText;
     entry.appendChild(nodeLabel);
-  }
-  else {
+  } else {
     let nodeLabel = document.createElement("label");
     nodeLabel.classList.add("form-check-label");
     nodeLabel.classList.add("fw-bold");
@@ -292,38 +289,38 @@ function AddBookmarkNodeItem(bookmarksList, nodeText, level, isUrl) {
 async function SaveLinkModal() {
   // stop if object size will exceed storage
   let tmpReaderLinks = structuredClone(readerLinks);
-  let newDays = ""
-    + (+document.getElementById("linkSunday").checked)
-    + (+document.getElementById("linkMonday").checked)
-    + (+document.getElementById("linkTuesday").checked)
-    + (+document.getElementById("linkWednesday").checked)
-    + (+document.getElementById("linkThursday").checked)
-    + (+document.getElementById("linkFriday").checked)
-    + (+document.getElementById("linkSaturday").checked);
+  let newDays =
+    "" +
+    +document.getElementById("linkSunday").checked +
+    +document.getElementById("linkMonday").checked +
+    +document.getElementById("linkTuesday").checked +
+    +document.getElementById("linkWednesday").checked +
+    +document.getElementById("linkThursday").checked +
+    +document.getElementById("linkFriday").checked +
+    +document.getElementById("linkSaturday").checked;
   let newUrl = document.getElementById("linkUrl").value;
   let linkIndex = document.getElementById("modalId").innerHTML;
 
   if (linkIndex == -1) {
     tmpReaderLinks.push({
       days: newDays,
-      url: newUrl
+      url: newUrl,
     });
-  }
-  else {
+  } else {
     tmpReaderLinks[linkIndex].days = newDays;
     tmpReaderLinks[linkIndex].url = newUrl;
   }
   let tmpBytes = byteSize(JSON.stringify(tmpReaderLinks));
   if (tmpBytes >= 8192) {
     alert(
-      "Too many links to read, exceeds 8 KB sync storage size, please delete some first."
+      "Too many links to read, exceeds 8 KB sync storage size, please delete some first.",
     );
     return;
   } else {
     // save value to chrome storage sync and reload links
     readerLinks = tmpReaderLinks;
     chrome.storage.sync.set({
-      readerLinks: tmpReaderLinks
+      readerLinks: tmpReaderLinks,
     });
 
     ReloadReaderLinks();
@@ -341,25 +338,25 @@ async function ShowLinkModal(id) {
     document.getElementById("linkUrl").value = obj["url"];
 
     document.getElementById("linkSunday").checked = parseInt(
-      obj["days"].charAt(0)
+      obj["days"].charAt(0),
     );
     document.getElementById("linkMonday").checked = parseInt(
-      obj["days"].charAt(1)
+      obj["days"].charAt(1),
     );
     document.getElementById("linkTuesday").checked = parseInt(
-      obj["days"].charAt(2)
+      obj["days"].charAt(2),
     );
     document.getElementById("linkWednesday").checked = parseInt(
-      obj["days"].charAt(3)
+      obj["days"].charAt(3),
     );
     document.getElementById("linkThursday").checked = parseInt(
-      obj["days"].charAt(4)
+      obj["days"].charAt(4),
     );
     document.getElementById("linkFriday").checked = parseInt(
-      obj["days"].charAt(5)
+      obj["days"].charAt(5),
     );
     document.getElementById("linkSaturday").checked = parseInt(
-      obj["days"].charAt(6)
+      obj["days"].charAt(6),
     );
     document.getElementById("modalId").innerHTML = id;
   }
@@ -380,7 +377,7 @@ async function DeleteLinkConfirmed() {
   readerLinks.splice(linkIndex, 1);
 
   chrome.storage.sync.set({
-    readerLinks: readerLinks
+    readerLinks: readerLinks,
   });
 
   ReloadReaderLinks();
@@ -396,7 +393,7 @@ function HandleDragDropReorder(fromIndex, toIndex) {
 
   // Save to storage
   chrome.storage.sync.set({
-    readerLinks: readerLinks
+    readerLinks: readerLinks,
   });
 
   // Note: We don't call ReloadReaderLinks() here because the DOM has already been reordered by the drag-drop manager
@@ -406,9 +403,9 @@ function HandleDragDropReorder(fromIndex, toIndex) {
 function ReloadReaderLinks() {
   document.getElementById("linksList").innerHTML = "";
   readerLinks.forEach((item, index) =>
-    AddItemToLinksList(linksList, index, item["url"])
+    AddItemToLinksList(linksList, index, item["url"]),
   );
-  
+
   // Refresh drag-drop after rendering links
   if (dragDropManager) {
     dragDropManager.refresh();
@@ -458,11 +455,11 @@ async function LoadDataFromStorage(items) {
     readerLinks = [];
   }
   readerLinks.forEach((item, index) =>
-    AddItemToLinksList(linksList, index, item["url"])
+    AddItemToLinksList(linksList, index, item["url"]),
   );
-  
+
   // Initialize drag-drop manager
-  dragDropManager = new DragDropManager('linksList', HandleDragDropReorder);
+  dragDropManager = new DragDropManager("linksList", HandleDragDropReorder);
 }
 
 function AddItemToLinksList(linksListElement, index, url) {
@@ -480,7 +477,7 @@ function AddItemToLinksList(linksListElement, index, url) {
   label.textContent = url;
   label.style.cursor = "pointer";
   label.setAttribute("title", url); // Show full URL on hover
-  
+
   // Make label clickable to open link in new tab
   label.addEventListener("click", () => {
     window.open(url, "_blank");
@@ -517,7 +514,11 @@ function AddItemToLinksList(linksListElement, index, url) {
   delBtn.classList.add("btn-outline-danger");
   delBtn.id = "deleteLink" + index;
   delBtn.appendChild(delIcon);
-  delBtn.addEventListener("click", () => DeleteLinkModal(index, "Confirm delete", "Delete link " + url + "?"), true);
+  delBtn.addEventListener(
+    "click",
+    () => DeleteLinkModal(index, "Confirm delete", "Delete link " + url + "?"),
+    true,
+  );
 
   let div = document.createElement("div");
   div.classList.add("align-middle");
@@ -541,5 +542,7 @@ window.onload = function () {
 
   linkModal = new bootstrap.Modal(document.getElementById("linkModal"));
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
-  bookmarksModal = new bootstrap.Modal(document.getElementById("bookmarksModal"));
+  bookmarksModal = new bootstrap.Modal(
+    document.getElementById("bookmarksModal"),
+  );
 };
