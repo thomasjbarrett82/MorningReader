@@ -109,12 +109,18 @@ function doAction(window, removeHomeTab, readerLinks) {
   chrome.tabs.query({ windowId: window.id, active: true }, function (tabs) {
     const activeTabId = tabs[0]?.id;
 
-    readerLinks.forEach(function (o) {
-      chrome.tabs.create({
-        url: o["url"],
-        windowId: window.id,
-        selected: false,
-        active: false, // Explicitly set to false
+    // Pass an explicit index so tab order doesn't depend on the browser's
+    // default placement heuristic, which can insert new tabs next to the
+    // active tab instead of appending them to the end.
+    chrome.tabs.query({ windowId: window.id }, function (allTabs) {
+      const baseIndex = allTabs.length;
+      readerLinks.forEach(function (o, i) {
+        chrome.tabs.create({
+          url: o["url"],
+          windowId: window.id,
+          index: baseIndex + i,
+          active: false,
+        });
       });
     });
 

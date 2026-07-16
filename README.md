@@ -36,3 +36,8 @@ Easy way to load up your morning reading websites. Synchronizes with your browse
 - Replaced up/down arrows with drag-and-drop link re-ordering
 - Format long links to hide extra text in display
 - If "Load links in existing window" is set, stay in the current tab when opening links
+
+2026-07-15 v1.1.1
+
+- fixed issue with reversed tab order opening
+- added claude.md
